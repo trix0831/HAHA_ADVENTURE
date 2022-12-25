@@ -12,7 +12,7 @@
 #include "Gate.h"
 
 bool checkState(Boat& boat, Gate& gate){
-    if (boat.getPosX() + boat.width == gate.getPosX()){
+    if (gate.getPosX() - boat.getPosX() < BOAT_WIDTH + 1){
         if (gate.getState() == 0){ //AND
             return (boat.getBoatType() & gate.getNumber());
         }else if (gate.getState() == 1){ //OR
@@ -27,7 +27,7 @@ bool checkState(Boat& boat, Gate& gate){
             return 0;
         }
     }else{
-        return 0;
+        return 1;
     }
 }
 

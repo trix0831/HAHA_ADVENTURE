@@ -52,7 +52,7 @@ public:
 
     void render(double camX, double camY) {
 //        gObsTexture.render(getPosX() - camX, getPosY() - camY, &currentGate[state][number]);
-        gObsTexture.render(getPosX() - camX, getPosY() - camY);
+        gObsTexture.render(getPosX() - camX, getPosY() - camY, &currentGate[state][number]);
 
     }
 
@@ -62,6 +62,11 @@ public:
 
     int getState() {
         return state;
+    }
+    
+    void assignGate(int newstate, int newnumber){
+        state = newstate;
+        number = newnumber;
     }
 
 private:
@@ -73,13 +78,15 @@ private:
 Gate::Gate(double x, double y, std::string imgPath):
     Obstacle(x, y, width, height, imgPath)
 {
+    state = 0;
+    number = 1;
     int cnt = 0;
     for (int i = 0; i<5; ++i){
         for (int j = 0; j<2; ++j){
             currentGate[i][j].x = cnt*GATE_WIDTH;
             currentGate[i][j].y = 0;
             currentGate[i][j].w = GATE_WIDTH;
-            currentGate[i][j].h = GATE_HEIGHT;
+            currentGate[i][j].h = LEVEL_HEIGHT;
             cnt ++;
         }
     }

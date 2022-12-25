@@ -52,6 +52,7 @@ SDL_Renderer* gRenderer = NULL;
 LTexture gBGTexture;
 LTexture STTexture;
 LTexture SELTexture;
+LTexture ENDTexture;
 
 //std::vector<Fish> fishVector;
 //std::vector<Gate> gateVector;
@@ -139,13 +140,32 @@ bool loadSelectionPage() {
     return success;
 }
 
-void restart(Boat &player1, Fish &fish1, Fish &fish2, Gate &gate1) {
-    player1.changePos(0, SCREEN_HEIGHT / 2-BOAT_HEIGHT/2);
+void restart(Boat& player1, Fish& fish1, Fish& fish2, Gate& gate1) {
+    player1.changePos(0, SCREEN_HEIGHT / 2 - BOAT_HEIGHT / 2);
     fish1.newPOS(1300, 100);
+    fish1.shiftColliders();
     fish2.newPOS(1900, 100);
+    fish2.shiftColliders();
     gate1.newPOS(2300, 0);
+    gate1.shiftColliders();
 
     std::cout << "restart" << std::endl;
+}
+
+bool END() {
+    bool success = true;
+
+    //Load background texture
+    if (!ENDTexture.loadFromFile("image/end.bmp"))
+    {
+        printf("Failed to load end texture!\n");
+        success = false;
+    }
+
+    ENDTexture.render(160, 100);
+    SDL_RenderPresent(gRenderer);
+
+    return success;
 }
 
 bool loadMedia()
@@ -202,7 +222,7 @@ int main(int argc, char* args[])
             SDL_Event a;
             bool start = false;
 
-            while(!start){
+            while (!start) {
                 while (SDL_PollEvent(&a) != 0)
                 {
                     if (a.type == SDL_KEYDOWN && a.key.repeat == 0 && a.key.keysym.sym == SDLK_s) {
@@ -244,7 +264,7 @@ int main(int argc, char* args[])
         SCREEN_WIDTH = 1024;
         SCREEN_HEIGHT = 300;
 
-        SDL_SetWindowSize(gWindow, SCREEN_WIDTH,SCREEN_HEIGHT);
+        SDL_SetWindowSize(gWindow, SCREEN_WIDTH, SCREEN_HEIGHT);
 
         if (!loadMedia())
         {
@@ -276,9 +296,9 @@ int main(int argc, char* args[])
             Fish fish1(1300, 140, "image/pufferfish(1).bmp");
             fish1.shiftColliders();
             //Gate gate1(1800, 0, "image/gate.bmp")
-            Fish fish2(1900,80,"image/pufferfish(1).bmp");
-            
-            Gate gate1(2200, 0, "image/andGate.png");
+            Fish fish2(1900, 80, "image/pufferfish(1).bmp");
+
+            Gate gate1(2200, 0, "image/MERGEgates (1).png");
             gate1.shiftColliders();
             //            fishVector.push_back(fish2);
 
@@ -305,11 +325,12 @@ int main(int argc, char* args[])
                         paddleNotEnd = true;
                     }
 
-                    if (e.type == SDL_KEYDOWN && e.key.repeat == 0 && e.key.keysym.sym == SDLK_r ) {
+                    if (e.type == SDL_KEYDOWN && e.key.repeat == 0 && e.key.keysym.sym == SDLK_r) {
                         restart(player1, fish1, fish2, gate1);
+                        END();
                     }
 
-                    if (player1.getPosX() > LEVEL_WIDTH - BOAT_WIDTH-10) {
+                    if (player1.getPosX() > LEVEL_WIDTH - BOAT_WIDTH - 10) {
                         restart(player1, fish1, fish2, gate1);
                     }
                 }
@@ -350,21 +371,21 @@ int main(int argc, char* args[])
                 player1.render(camera.x, camera.y, frame);
                 fish1.render(camera.x, camera.y);
                 if (ishard)
-                fish2.render(camera.x, camera.y);
+                    fish2.render(camera.x, camera.y);
                 gate1.render(camera.x, camera.y);
-                                //Render fish
-                //                for (int i = 0; i<fishVector.size(); ++i){
-                //                    Fish &curfish = fishVector[i];
-                //                    if (curfish.getPosX() - player1.getPosX() < 3*(SCREEN_WIDTH/4)+60 && curfish.checkAppeared() == 0){
-                //                        curfish.switchAppeared();
-                //                    }else if (player1.getPosX() - curfish.getPosX() > (SCREEN_WIDTH/4)+60){
-                //                        curfish.switchAppeared();
-                //                        curfish.newPOS(player1.getPosX()+SCREEN_WIDTH, rand()%SCREEN_HEIGHT);
-                //                    }
-                //                    if (checkCollision(player1.getColliders(), curfish.getColliders()) == 1){
-                //                        player1.bounce();
-                //                    }
-                //                }
+                //Render fish
+//                for (int i = 0; i<fishVector.size(); ++i){
+//                    Fish &curfish = fishVector[i];
+//                    if (curfish.getPosX() - player1.getPosX() < 3*(SCREEN_WIDTH/4)+60 && curfish.checkAppeared() == 0){
+//                        curfish.switchAppeared();
+//                    }else if (player1.getPosX() - curfish.getPosX() > (SCREEN_WIDTH/4)+60){
+//                        curfish.switchAppeared();
+//                        curfish.newPOS(player1.getPosX()+SCREEN_WIDTH, rand()%SCREEN_HEIGHT);
+//                    }
+//                    if (checkCollision(player1.getColliders(), curfish.getColliders()) == 1){
+//                        player1.bounce();
+//                    }
+//                }
                 if (checkCollision(player1.getColliders(), fish1.getColliders()) == 1) {
                     player1.bounce();
                 }
@@ -374,7 +395,7 @@ int main(int argc, char* args[])
                 if (checkCollision(player1.getColliders(), gate1.getColliders()) == 1) {
                     player1.bounce();
                 }
-                if (checkState(player1, gate1) == 1){
+                if (checkState(player1, gate1) == 0) {
                     player1.bounce();
                 }
                 if (player1.getPosX() - fish1.getPosX() > 60 + SCREEN_WIDTH / 4) {
@@ -387,6 +408,10 @@ int main(int argc, char* args[])
                 }
                 if (player1.getPosX() - gate1.getPosX() > 60 + SCREEN_WIDTH / 4) {
                     gate1.newPOS(player1.getPosX() + SCREEN_WIDTH, 0);
+                    do {
+                        gate1.assignGate(rand() % 5, rand() % 2);
+                    } while ((gate1.getState() == 0 && gate1.getNumber() == 0) || (gate1.getState() == 4 && gate1.getNumber() == 1));
+                    std::cout << "state:" << gate1.getState() << " number:" << gate1.getNumber() << std::endl;
                     gate1.shiftColliders();
                 }
 
@@ -450,3 +475,4 @@ int main(int argc, char* args[])
 
     return 0;
 }
+
