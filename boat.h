@@ -54,6 +54,8 @@ public:
         return boatType;
     }
 
+    bool changePos(int x, int y);
+
     //Position accessors
     double getPosX();
     double getPosY();
@@ -350,4 +352,10 @@ double Boat::getPosX()
 double Boat::getPosY()
 {
     return mPosY;
+}
+
+bool Boat::changePos(int x,int y) {
+    mPosX = x;
+    mPosY = y;
+    return true;
 }

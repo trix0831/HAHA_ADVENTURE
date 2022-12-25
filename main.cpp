@@ -139,8 +139,13 @@ bool loadSelectionPage() {
     return success;
 }
 
-bool createGameWindow() {
-    return true;
+void restart(Boat &player1, Fish &fish1, Fish &fish2, Gate &gate1) {
+    player1.changePos(0, SCREEN_HEIGHT / 2-BOAT_HEIGHT/2);
+    fish1.newPOS(1300, 100);
+    fish2.newPOS(1900, 100);
+    gate1.newPOS(2300, 0);
+
+    std::cout << "restart" << std::endl;
 }
 
 bool loadMedia()
@@ -273,7 +278,7 @@ int main(int argc, char* args[])
             //Gate gate1(1800, 0, "image/gate.bmp")
             Fish fish2(1900,80,"image/pufferfish(1).bmp");
             
-            Gate gate1(1800, 0, "image/andGate.png");
+            Gate gate1(2200, 0, "image/andGate.png");
             gate1.shiftColliders();
             //            fishVector.push_back(fish2);
 
@@ -298,6 +303,14 @@ int main(int argc, char* args[])
 
                     if (e.type == SDL_KEYDOWN && e.key.repeat == 0 && (e.key.keysym.sym == SDLK_LEFT || e.key.keysym.sym == SDLK_RIGHT)) {
                         paddleNotEnd = true;
+                    }
+
+                    if (e.type == SDL_KEYDOWN && e.key.repeat == 0 && e.key.keysym.sym == SDLK_r ) {
+                        restart(player1, fish1, fish2, gate1);
+                    }
+
+                    if (player1.getPosX() > LEVEL_WIDTH - BOAT_WIDTH-10) {
+                        restart(player1, fish1, fish2, gate1);
                     }
                 }
 
