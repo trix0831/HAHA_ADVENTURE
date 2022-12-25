@@ -27,6 +27,9 @@ int SCREEN_HEIGHT = 480;
 int paddleTimes = 0;
 bool paddleNotEnd = true;
 
+//game mode
+bool ishard = false;
+
 std::queue< std::vector<SDL_Rect> > Colliders;
 
 //Starts up SDL and creates window
@@ -48,8 +51,9 @@ SDL_Renderer* gRenderer = NULL;
 //Scene textures
 LTexture gBGTexture;
 LTexture STTexture;
+LTexture SELTexture;
 
-std::vector<Fish> fishVector;
+//std::vector<Fish> fishVector;
 //std::vector<Gate> gateVector;
 
 
@@ -122,6 +126,19 @@ bool loadStartPage() {
     return success;
 }
 
+bool loadSelectionPage() {
+    bool success = true;
+
+    //Load background texture
+    if (!SELTexture.loadFromFile("image/difficultySelection.bmp"))
+    {
+        printf("Failed to load selection texture!\n");
+        success = false;
+    }
+
+    return success;
+}
+
 bool createGameWindow() {
     return true;
 }
@@ -169,7 +186,7 @@ int main(int argc, char* args[])
     }
     else
     {
-        //Load media
+        //start page
         if (!loadStartPage()) {
             printf("Failed to load start!\n");
         }
@@ -185,6 +202,32 @@ int main(int argc, char* args[])
                 {
                     if (a.type == SDL_KEYDOWN && a.key.repeat == 0 && a.key.keysym.sym == SDLK_s) {
                         start = true;
+                    }
+                }
+            }
+        }
+
+        if (!loadSelectionPage()) {
+            printf("Failed to load selection!\n");
+        }
+        else {
+            SELTexture.render(0, 0);
+            SDL_RenderPresent(gRenderer);
+
+            SDL_Event b;
+            bool selected = false;
+
+            while (!selected) {
+                while (SDL_PollEvent(&b) != 0)
+                {
+                    if (b.type == SDL_KEYDOWN && b.key.repeat == 0 && b.key.keysym.sym == SDLK_h) {
+                        ishard = true;
+                        selected = true;
+                    }
+
+                    if (b.type == SDL_KEYDOWN && b.key.repeat == 0 && b.key.keysym.sym == SDLK_e) {
+                        ishard = false;
+                        selected = true;
                     }
                 }
             }
@@ -293,6 +336,7 @@ int main(int argc, char* args[])
                 //Render player
                 player1.render(camera.x, camera.y, frame);
                 fish1.render(camera.x, camera.y);
+                if (ishard)
                 fish2.render(camera.x, camera.y);
                 gate1.render(camera.x, camera.y);
                                 //Render fish
@@ -311,7 +355,7 @@ int main(int argc, char* args[])
                 if (checkCollision(player1.getColliders(), fish1.getColliders()) == 1) {
                     player1.bounce();
                 }
-                if (checkCollision(player1.getColliders(), fish2.getColliders()) == 1) {
+                if (checkCollision(player1.getColliders(), fish2.getColliders()) == 1 && ishard) {
                     player1.bounce();
                 }
                 if (checkCollision(player1.getColliders(), gate1.getColliders()) == 1) {
@@ -324,7 +368,7 @@ int main(int argc, char* args[])
                     fish1.newPOS(player1.getPosX() + SCREEN_WIDTH, rand() % 240);
                     fish1.shiftColliders();
                 }
-                if (player1.getPosX() - fish2.getPosX() > 60 + SCREEN_WIDTH / 4) {
+                if (player1.getPosX() - fish2.getPosX() > 60 + SCREEN_WIDTH / 4 and ishard) {
                     fish2.newPOS(player1.getPosX() + SCREEN_WIDTH, rand() % 240);
                     fish2.shiftColliders();
                 }
