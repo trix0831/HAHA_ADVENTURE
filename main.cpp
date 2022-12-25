@@ -8,6 +8,7 @@
 #include "boat.h"
 #include "LTexture.h"
 #include "Fish.h"
+#include "Gate.h"
 #include "Collision.h"
 #include "checkState.h"
 #include <stdlib.h>
@@ -192,7 +193,7 @@ int main(int argc, char* args[])
         //SDL_DestroyWindow(gWindow);
         //gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 
-        SCREEN_WIDTH = 1280;
+        SCREEN_WIDTH = 1024;
         SCREEN_HEIGHT = 300;
 
         SDL_SetWindowSize(gWindow, SCREEN_WIDTH,SCREEN_HEIGHT);
@@ -225,9 +226,12 @@ int main(int argc, char* args[])
 
             Boat player1;
             Fish fish1(1300, 140, "image/pufferfish(1).bmp");
-            //Gate gate1(1800, 0, "image/gate.bmp");
-            fishVector.push_back(fish1);
-                        Fish fish2(1900,80,"image/pufferfish(1).bmp");
+            fish1.shiftColliders();
+            //Gate gate1(1800, 0, "image/gate.bmp")
+            Fish fish2(1900,80,"image/pufferfish(1).bmp");
+            
+            Gate gate1(1800, 0, "image/andGate.png");
+            gate1.shiftColliders();
             //            fishVector.push_back(fish2);
 
 
@@ -289,8 +293,8 @@ int main(int argc, char* args[])
                 //Render player
                 player1.render(camera.x, camera.y, frame);
                 fish1.render(camera.x, camera.y);
-                              fish2.render(camera.x, camera.y);
-
+                fish2.render(camera.x, camera.y);
+                gate1.render(camera.x, camera.y);
                                 //Render fish
                 //                for (int i = 0; i<fishVector.size(); ++i){
                 //                    Fish &curfish = fishVector[i];
@@ -310,9 +314,12 @@ int main(int argc, char* args[])
                 if (checkCollision(player1.getColliders(), fish2.getColliders()) == 1) {
                     player1.bounce();
                 }
-                //                if (checkState(player1, gate1) == 1){
-                //                    player1.bounce();
-                //                }
+                if (checkCollision(player1.getColliders(), gate1.getColliders()) == 1) {
+                    player1.bounce();
+                }
+                if (checkState(player1, gate1) == 1){
+                    player1.bounce();
+                }
                 if (player1.getPosX() - fish1.getPosX() > 60 + SCREEN_WIDTH / 4) {
                     fish1.newPOS(player1.getPosX() + SCREEN_WIDTH, rand() % 240);
                     fish1.shiftColliders();
@@ -320,6 +327,10 @@ int main(int argc, char* args[])
                 if (player1.getPosX() - fish2.getPosX() > 60 + SCREEN_WIDTH / 4) {
                     fish2.newPOS(player1.getPosX() + SCREEN_WIDTH, rand() % 240);
                     fish2.shiftColliders();
+                }
+                if (player1.getPosX() - gate1.getPosX() > 60 + SCREEN_WIDTH / 4) {
+                    gate1.newPOS(player1.getPosX() + SCREEN_WIDTH, 0);
+                    gate1.shiftColliders();
                 }
 
                 //                if (int(player1.getPosX())%2000 > 3000  && fish1.checkAppeared() == 0){

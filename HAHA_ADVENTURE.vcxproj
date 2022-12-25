@@ -22,12 +22,13 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\Downloads\checkState.h" />
     <ClInclude Include="..\..\..\..\..\Downloads\Collision.h" />
-    <ClInclude Include="..\..\..\..\..\Downloads\Fish.h" />
-    <ClInclude Include="..\..\..\..\..\Downloads\Obstacle.h" />
     <ClInclude Include="boat.h" />
+    <ClInclude Include="checkState.h" />
+    <ClInclude Include="Fish.h" />
+    <ClInclude Include="Gate.h" />
     <ClInclude Include="LTexture.h" />
+    <ClInclude Include="Obstacle.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
