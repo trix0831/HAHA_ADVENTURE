@@ -60,6 +60,7 @@ SDL_Renderer* gRenderer = NULL;
 LTexture gBGTexture;
 LTexture STTexture;
 LTexture SELTexture;
+LTexture ENDTexture;
 
 //Globally used font
 TTF_Font* gFont = NULL;
@@ -188,6 +189,14 @@ bool loadSelectionPage() {
     return success;
 }
 
+void loadEndPic() {
+    //Load background texture
+    if (!ENDTexture.loadFromFile("image/end.bmp"))
+    {
+        printf("Failed to load end texture!\n");
+    }
+}
+
 void restart(Boat &player1, Fish &fish1, Fish &fish2, Gate &gate1, Gate &tmpgate, Fish &tmpfish) {
     player1.changePos(0, SCREEN_HEIGHT / 2-BOAT_HEIGHT/2);
     fish1.newPOS(1300, 100);
@@ -263,6 +272,7 @@ int main(int argc, char* args[])
     }
     else
     {
+        loadEndPic();
         //start page
         if (!loadStartPage()) {
             printf("Failed to load start!\n");
@@ -406,6 +416,7 @@ int main(int argc, char* args[])
 
                     if (e.type == SDL_KEYDOWN && e.key.repeat == 0 && e.key.keysym.sym == SDLK_w) {
                         player1.changePos(LEVEL_WIDTH - BOAT_WIDTH - 5, SCREEN_HEIGHT / 2 - BOAT_HEIGHT / 2);
+
                     }
 
                     if (player1.getPosX() > LEVEL_WIDTH - BOAT_WIDTH-10 && gameEnded == false) {
@@ -448,22 +459,6 @@ int main(int argc, char* args[])
                     camera.y = LEVEL_HEIGHT - camera.h;
                 }
 
-                //Clear screen
-                //SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0xFF, 0xFF);
-                //SDL_RenderClear(gRenderer);
-                                //Render fish
-                //                for (int i = 0; i<fishVector.size(); ++i){
-                //                    Fish &curfish = fishVector[i];
-                //                    if (curfish.getPosX() - player1.getPosX() < 3*(SCREEN_WIDTH/4)+60 && curfish.checkAppeared() == 0){
-                //                        curfish.switchAppeared();
-                //                    }else if (player1.getPosX() - curfish.getPosX() > (SCREEN_WIDTH/4)+60){
-                //                        curfish.switchAppeared();
-                //                        curfish.newPOS(player1.getPosX()+SCREEN_WIDTH, rand()%SCREEN_HEIGHT);
-                //                    }
-                //                    if (checkCollision(player1.getColliders(), curfish.getColliders()) == 1){
-                //                        player1.bounce();
-                //                    }
-                //                }
                 if (checkCollision(player1.getColliders(), fish1.getColliders()) == 1) {
                     player1.bounce();
                 }
@@ -530,16 +525,17 @@ int main(int argc, char* args[])
                     {
                         printf("Unable to render time texture!\n");
                     }
+                    
                 }
-
-
-
+                //LEVEL_WIDTH - SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 - 90
 
                 //Render textures
                                 //Render background
                 gBGTexture.render(0, 0, &camera);
 
                 //Render player
+                if(gameEnded)
+                ENDTexture.render(362, 60);
                 player1.render(camera.x, camera.y, frame);
                 fish1.render(camera.x, camera.y);
                 if (isHard) {
@@ -548,8 +544,6 @@ int main(int argc, char* args[])
                 gate1.render(camera.x, camera.y);
                 tmpfish.render(camera.x, camera.y);
                 tmpgate.render(camera.x, camera.y);
-                //gStartPromptTexture.render((SCREEN_WIDTH - gStartPromptTexture.getWidth()) / 2, 0);
-                //gPausePromptTexture.render((SCREEN_WIDTH - gPausePromptTexture.getWidth()) / 2, gStartPromptTexture.getHeight());
                 gTimeTextTexture.render((SCREEN_WIDTH - gStartPromptTexture.getWidth()) / 2, 0);
 
                 //Go to next frame
