@@ -33,6 +33,9 @@ bool paddleNotEnd = true;
 //game mode
 bool isHard = false;
 
+
+bool quit = false;
+
 LTimer timer;
 
 std::queue< std::vector<SDL_Rect> > Colliders;
@@ -69,10 +72,6 @@ TTF_Font* gFont = NULL;
 LTexture gTimeTextTexture;
 LTexture gPausePromptTexture;
 LTexture gStartPromptTexture;
-
-//std::vector<Fish> fishVector;
-//std::vector<Gate> gateVector;
-
 
 
 
@@ -198,23 +197,79 @@ void loadEndPic() {
 }
 
 void restart(Boat &player1, Fish &fish1, Fish &fish2, Gate &gate1, Gate &tmpgate, Fish &tmpfish) {
+
+    timer.stop();
+    gameEnded = false;
+    gameStarted = false;
+
+    SCREEN_WIDTH = 640;
+    SCREEN_HEIGHT = 480;
+
+    SDL_SetWindowSize(gWindow, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    STTexture.render(0, 0);
+    SDL_RenderPresent(gRenderer);
+
+    SDL_Event a;
+    bool start = false;
+
+    while (!start && !quit) {
+        while (SDL_PollEvent(&a) != 0)
+        {
+            if (a.type == SDL_QUIT)
+            {
+                quit = true;
+            }
+
+            if (a.type == SDL_KEYDOWN && a.key.repeat == 0 && a.key.keysym.sym == SDLK_s) {
+                start = true;
+            }
+        }
+    }
+
+    SELTexture.render(0, 0);
+    SDL_RenderPresent(gRenderer);
+
+    SDL_Event b;
+    bool selected = false;
+
+    while (!selected && !quit) {
+        while (SDL_PollEvent(&b) != 0)
+        {
+            if (b.type == SDL_QUIT)
+            {
+                quit = true;
+            }
+
+            if (b.type == SDL_KEYDOWN && b.key.repeat == 0 && b.key.keysym.sym == SDLK_h) {
+                isHard = true;
+                selected = true;
+            }
+
+            if (b.type == SDL_KEYDOWN && b.key.repeat == 0 && b.key.keysym.sym == SDLK_e) {
+                isHard = false;
+                selected = true;
+            }
+        }
+    }
+
+    SCREEN_WIDTH = 1024;
+    SCREEN_HEIGHT = 300;
+
+    SDL_SetWindowSize(gWindow, SCREEN_WIDTH, SCREEN_HEIGHT);
+
     player1.changePos(0, SCREEN_HEIGHT / 2-BOAT_HEIGHT/2);
-    fish1.newPOS(1300, 100);
+    fish1.newPOS(1100, 100);
     fish1.shiftColliders();
-    fish2.newPOS(1900, 100);
+    fish2.newPOS(1600, 100);
     fish2.shiftColliders();
-    gate1.newPOS(2300, 0);
+    gate1.newPOS(2000, 0);
     gate1.shiftColliders();
     tmpgate.newPOS(13000, 0);
     tmpgate.shiftColliders();
     tmpfish.newPOS(13000, 0);
     tmpfish.shiftColliders();
 
-    timer.stop();
-    gameEnded = false;
-    gameStarted = false;
-
-//    std::cout << "restart" << std::endl;
 }
 
 bool loadMedia()
@@ -264,7 +319,6 @@ int main(int argc, char* args[])
     time_t t;
     srand((unsigned)time(&t));
 
-    bool quit = false;
     //Start up SDL and create window
     if (!init())
     {
@@ -359,13 +413,13 @@ int main(int argc, char* args[])
 
 
             Boat player1;
-            Fish fish1(1300, 140, "image/pufferfish(1).bmp");
+            Fish fish1(1100, 140, "image/pufferfish(1).bmp");
             fish1.shiftColliders();
             //Gate gate1(1800, 0, "image/gate.bmp")
-            Fish fish2(1900,80,"image/pufferfish(1).bmp");
+            Fish fish2(1600,80,"image/pufferfish(1).bmp");
             fish2.shiftColliders();
             
-            Gate gate1(2200, 0, "image/MERGEgates (1).png");
+            Gate gate1(2000, 0, "image/MERGEgates (1).png");
             gate1.shiftColliders();
             
             Gate tmpgate(13200, 0, "image/MERGEgates (1).png");
@@ -527,7 +581,6 @@ int main(int argc, char* args[])
                     }
                     
                 }
-                //LEVEL_WIDTH - SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 - 90
 
                 //Render textures
                                 //Render background

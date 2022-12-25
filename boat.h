@@ -90,7 +90,7 @@ Boat::Boat()
 {
     //Initialize the offsets
     mPosX = 0;
-    mPosY = 0;
+    mPosY = 300/2-BOAT_HEIGHT/2;
 
     //Initialize the velocity
     mVelX = 0;
