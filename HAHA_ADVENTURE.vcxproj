@@ -19,16 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\Downloads\Collision.h" />
     <ClInclude Include="boat.h" />
     <ClInclude Include="checkState.h" />
+    <ClInclude Include="Collision.h" />
     <ClInclude Include="Fish.h" />
     <ClInclude Include="Gate.h" />
     <ClInclude Include="LTexture.h" />
+    <ClInclude Include="LTimer.h" />
     <ClInclude Include="Obstacle.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

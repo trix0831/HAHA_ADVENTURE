@@ -1,12 +1,11 @@
 #include<iostream>
 #include<cstdlib>
-#include "SDL.h"
-#include "SDL2/SDL_ttf.h"
 #include <string>
 #include <sstream>
 #include <iomanip>
 using namespace std;
 SDL_Color TextColor={254,254,254};//Color of time text
+
 
 class Timer{
 	public:
@@ -31,6 +30,8 @@ class Timer{
 		SDL_Texture* texture2;//texture for minimum elapsed time
 		
 		TTF_Font* font;
+
+		//SDL_Rect* fontRect;
 		
 		int Width;
 		int Height;
@@ -53,30 +54,45 @@ class Timer{
 };
 Timer::Timer():posx(600),posy(20),TimeStarted(0),TimePaused(0),TimeMinimum(0){
 	TTF_Init();
+
+	//fontRect->x = 0;
+	//fontRect->y = 0;
+	//fontRect->w = 100;
+	//fontRect->h = 50;
+
 	started=false;
 	paused=false;
-	font=TTF_OpenFont("./img/lazy.ttf",28);
+	font=TTF_OpenFont("image/lazy.ttf",28);
 }
 
-void Timer::Init(SDL_Renderer* rd,string str){
-	surface=TTF_RenderText_Solid(font,str.c_str(),TextColor);
-	Width=surface->w;
-	Height=surface->h;
-	pos={posx,posy,Width,Height};
-	texture=SDL_CreateTextureFromSurface(rd,surface);
-	SDL_RenderSetViewport(rd,&pos);
-	SDL_RenderCopy(rd,texture,NULL,NULL);
+//void Timer::Init(SDL_Renderer* rd,string str){
+//	surface=TTF_RenderText_Solid(font,str.c_str(),TextColor);
+//	Width=surface->w/2;
+//	Height=surface->h/2;
+//	pos={posx,posy,Width,Height};
+//	texture=SDL_CreateTextureFromSurface(rd,surface);
+//	//SDL_RenderSetViewport(rd,&pos);
+//	SDL_RenderCopy(rd,texture,NULL,NULL);
+//}
+//
+//void Timer::Init2(SDL_Renderer* rd,string str){
+//	surface2=TTF_RenderText_Solid(font,str.c_str(),TextColor);
+//	Width=surface2->w;
+//	Height=surface2->h;
+//	pos2={posx,posy+40,Width,Height};
+//	texture2=SDL_CreateTextureFromSurface(rd,surface2);
+//	//SDL_RenderSetViewport(rd,&pos2);
+//	SDL_RenderCopy(rd,texture2,NULL, NULL);
+//}
+
+void Timer::Init(SDL_Renderer* rd, string str) {
+	
 }
 
-void Timer::Init2(SDL_Renderer* rd,string str){
-	surface2=TTF_RenderText_Solid(font,str.c_str(),TextColor);
-	Width=surface2->w;
-	Height=surface2->h;
-	pos2={posx,posy+40,Width,Height};
-	texture2=SDL_CreateTextureFromSurface(rd,surface2);
-	SDL_RenderSetViewport(rd,&pos2);
-	SDL_RenderCopy(rd,texture2,NULL,NULL);
+void Timer::Init2(SDL_Renderer* rd, string str) {
+	
 }
+
 void Timer::update(SDL_Renderer* rd){
 	timetxt.str("");
 	timetxt<<setw(2)<<setfill('0')<<GetTime()/(1000*60)<<':';

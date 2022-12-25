@@ -1,9 +1,11 @@
 #pragma once
 //Texture wrapper class
-
+#include<SDL.h>
+#include<SDL_image.h>
+#include<SDL_ttf.h>
 
 extern SDL_Renderer* gRenderer;
-
+extern TTF_Font* gFont;
 
 
 class LTexture
@@ -106,7 +108,6 @@ bool LTexture::loadFromFile(std::string path)
     return mTexture != NULL;
 }
 
-#if defined(SDL_TTF_MAJOR_VERSION)
 bool LTexture::loadFromRenderedText(std::string textureText, SDL_Color textColor)
 {
     //Get rid of preexisting texture
@@ -141,7 +142,6 @@ bool LTexture::loadFromRenderedText(std::string textureText, SDL_Color textColor
     //Return success
     return mTexture != NULL;
 }
-#endif
 
 void LTexture::free()
 {

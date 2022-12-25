@@ -1,14 +1,17 @@
 //Using SDL, SDL_image, standard IO, vectors, and strings
 #include<SDL.h>
 #include<SDL_image.h>
+#include<SDL_ttf.h>
 #include <stdio.h>
 #include <queue>
 #include <vector>
 #include <string>
+#include <sstream>
 #include "boat.h"
 #include "LTexture.h"
 #include "Fish.h"
 #include "Gate.h"
+#include "LTimer.h"
 #include "Collision.h"
 #include "checkState.h"
 #include <stdlib.h>
@@ -52,7 +55,14 @@ SDL_Renderer* gRenderer = NULL;
 LTexture gBGTexture;
 LTexture STTexture;
 LTexture SELTexture;
-LTexture ENDTexture;
+
+//Globally used font
+TTF_Font* gFont = NULL;
+
+//Scene textures
+LTexture gTimeTextTexture;
+LTexture gPausePromptTexture;
+LTexture gStartPromptTexture;
 
 //std::vector<Fish> fishVector;
 //std::vector<Gate> gateVector;
@@ -107,7 +117,40 @@ bool init()
                     success = false;
                 }
             }
+
+            //Initialize SDL_ttf
+            if (TTF_Init() == -1)
+            {
+                printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
+                success = false;
+            }
         }
+    }
+
+    gFont = TTF_OpenFont("image/lazy.ttf", 28);
+    if (gFont == NULL)
+    {
+        printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
+        success = false;
+    }
+    else
+    {
+        //Set text color as black
+        SDL_Color textColor = { 0, 0, 0, 255 };
+
+        ////Load stop prompt texture
+        //if (!gStartPromptTexture.loadFromRenderedText("Press S to Start or Stop the Timer", textColor))
+        //{
+        //    printf("Unable to render start/stop prompt texture!\n");
+        //    success = false;
+        //}
+
+        ////Load pause prompt texture
+        //if (!gPausePromptTexture.loadFromRenderedText("Press P to Pause or Unpause the Timer", textColor))
+        //{
+        //    printf("Unable to render pause/unpause prompt texture!\n");
+        //    success = false;
+        //}
     }
 
     return success;
@@ -140,32 +183,20 @@ bool loadSelectionPage() {
     return success;
 }
 
-void restart(Boat& player1, Fish& fish1, Fish& fish2, Gate& gate1) {
-    player1.changePos(0, SCREEN_HEIGHT / 2 - BOAT_HEIGHT / 2);
+void restart(Boat &player1, Fish &fish1, Fish &fish2, Gate &gate1, Gate &tmpgate, Fish &tmpfish) {
+    player1.changePos(0, SCREEN_HEIGHT / 2-BOAT_HEIGHT/2);
     fish1.newPOS(1300, 100);
     fish1.shiftColliders();
     fish2.newPOS(1900, 100);
     fish2.shiftColliders();
     gate1.newPOS(2300, 0);
     gate1.shiftColliders();
+    tmpgate.newPOS(13000, 0);
+    tmpgate.shiftColliders();
+    tmpfish.newPOS(13000, 0);
+    tmpfish.shiftColliders();
 
-    std::cout << "restart" << std::endl;
-}
-
-bool END() {
-    bool success = true;
-
-    //Load background texture
-    if (!ENDTexture.loadFromFile("image/end.bmp"))
-    {
-        printf("Failed to load end texture!\n");
-        success = false;
-    }
-
-    ENDTexture.render(160, 100);
-    SDL_RenderPresent(gRenderer);
-
-    return success;
+//    std::cout << "restart" << std::endl;
 }
 
 bool loadMedia()
@@ -188,6 +219,15 @@ void close()
     //Free loaded images
     gBGTexture.free();
 
+    //Free loaded images
+    gTimeTextTexture.free();
+    gStartPromptTexture.free();
+    gPausePromptTexture.free();
+
+    //Free global font
+    TTF_CloseFont(gFont);
+    gFont = NULL;
+
     //Destroy window
     SDL_DestroyRenderer(gRenderer);
     SDL_DestroyWindow(gWindow);
@@ -195,6 +235,7 @@ void close()
     gRenderer = NULL;
 
     //Quit SDL subsystems
+    TTF_Quit();
     IMG_Quit();
     SDL_Quit();
 }
@@ -222,7 +263,7 @@ int main(int argc, char* args[])
             SDL_Event a;
             bool start = false;
 
-            while (!start) {
+            while(!start){
                 while (SDL_PollEvent(&a) != 0)
                 {
                     if (a.type == SDL_KEYDOWN && a.key.repeat == 0 && a.key.keysym.sym == SDLK_s) {
@@ -258,13 +299,10 @@ int main(int argc, char* args[])
             }
         }
 
-        //SDL_DestroyWindow(gWindow);
-        //gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-
         SCREEN_WIDTH = 1024;
         SCREEN_HEIGHT = 300;
 
-        SDL_SetWindowSize(gWindow, SCREEN_WIDTH, SCREEN_HEIGHT);
+        SDL_SetWindowSize(gWindow, SCREEN_WIDTH,SCREEN_HEIGHT);
 
         if (!loadMedia())
         {
@@ -275,6 +313,13 @@ int main(int argc, char* args[])
             //Main loop flag
             bool quit = false;
 
+            LTimer timer;
+
+            std::stringstream timeText;
+
+            //Set text color as black
+            SDL_Color textColor = { 0, 0, 0, 255 };
+
             //Event handler
             SDL_Event e;
 
@@ -282,24 +327,25 @@ int main(int argc, char* args[])
             int frame = 0;
             int count = 0;
 
-            //The dot that will be moving around on the screen
-//            Fish fish1(0,0);
 
-            //generating random fish
-//            while (curx < LEVEL_WIDTH){
-//                Fish tmpfish(curx+rand()%200, rand()%LEVEL_HEIGHT);
-//                Colliders.push(tmpfish.getColliders());
-//            }
 
 
             Boat player1;
             Fish fish1(1300, 140, "image/pufferfish(1).bmp");
             fish1.shiftColliders();
             //Gate gate1(1800, 0, "image/gate.bmp")
-            Fish fish2(1900, 80, "image/pufferfish(1).bmp");
-
+            Fish fish2(1900,80,"image/pufferfish(1).bmp");
+            fish2.shiftColliders();
+            
             Gate gate1(2200, 0, "image/MERGEgates (1).png");
             gate1.shiftColliders();
+            
+            Gate tmpgate(13200, 0, "image/MERGEgates (1).png");
+            tmpgate.shiftColliders();
+            
+            Fish tmpfish(13000,140, "image/pufferfish(1).bmp");
+            tmpfish.shiftColliders();
+            
             //            fishVector.push_back(fish2);
 
 
@@ -325,15 +371,42 @@ int main(int argc, char* args[])
                         paddleNotEnd = true;
                     }
 
-                    if (e.type == SDL_KEYDOWN && e.key.repeat == 0 && e.key.keysym.sym == SDLK_r) {
-                        restart(player1, fish1, fish2, gate1);
-                        END();
+                    if (e.type == SDL_KEYDOWN && e.key.repeat == 0 && e.key.keysym.sym == SDLK_r ) {
+                        restart(player1, fish1, fish2, gate1, tmpgate, tmpfish);
                     }
 
-                    if (player1.getPosX() > LEVEL_WIDTH - BOAT_WIDTH - 10) {
-                        restart(player1, fish1, fish2, gate1);
+                    if (player1.getPosX() > LEVEL_WIDTH - BOAT_WIDTH-10) {
+                        restart(player1, fish1, fish2, gate1, tmpgate, tmpfish);
                     }
+                    if (e.key.keysym.sym == SDLK_s)
+                    {
+                        timer.start();
+                        //if (timer.isStarted())
+                        //{
+                        //    timer.stop();
+                        //}
+                        //else
+                        //{
+                        //    timer.start();
+                        //}
+                    }
+                    //Pause/unpause
+                    else if (e.key.keysym.sym == SDLK_p)
+                    {
+                        timer.stop();
+                        //if (timer.isPaused())
+                        //{
+                        //    timer.unpause();
+                        //}
+                        //else
+                        //{
+                        //    timer.pause();
+                        //}
+                    }
+
                 }
+
+
 
                 //Move the dot
                 player1.move();
@@ -361,57 +434,62 @@ int main(int argc, char* args[])
                 }
 
                 //Clear screen
-                SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-                SDL_RenderClear(gRenderer);
-
-                //Render background
-                gBGTexture.render(0, 0, &camera);
-
-                //Render player
-                player1.render(camera.x, camera.y, frame);
-                fish1.render(camera.x, camera.y);
-                if (ishard)
-                    fish2.render(camera.x, camera.y);
-                gate1.render(camera.x, camera.y);
-                //Render fish
-//                for (int i = 0; i<fishVector.size(); ++i){
-//                    Fish &curfish = fishVector[i];
-//                    if (curfish.getPosX() - player1.getPosX() < 3*(SCREEN_WIDTH/4)+60 && curfish.checkAppeared() == 0){
-//                        curfish.switchAppeared();
-//                    }else if (player1.getPosX() - curfish.getPosX() > (SCREEN_WIDTH/4)+60){
-//                        curfish.switchAppeared();
-//                        curfish.newPOS(player1.getPosX()+SCREEN_WIDTH, rand()%SCREEN_HEIGHT);
-//                    }
-//                    if (checkCollision(player1.getColliders(), curfish.getColliders()) == 1){
-//                        player1.bounce();
-//                    }
-//                }
+                //SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0xFF, 0xFF);
+                //SDL_RenderClear(gRenderer);
+                                //Render fish
+                //                for (int i = 0; i<fishVector.size(); ++i){
+                //                    Fish &curfish = fishVector[i];
+                //                    if (curfish.getPosX() - player1.getPosX() < 3*(SCREEN_WIDTH/4)+60 && curfish.checkAppeared() == 0){
+                //                        curfish.switchAppeared();
+                //                    }else if (player1.getPosX() - curfish.getPosX() > (SCREEN_WIDTH/4)+60){
+                //                        curfish.switchAppeared();
+                //                        curfish.newPOS(player1.getPosX()+SCREEN_WIDTH, rand()%SCREEN_HEIGHT);
+                //                    }
+                //                    if (checkCollision(player1.getColliders(), curfish.getColliders()) == 1){
+                //                        player1.bounce();
+                //                    }
+                //                }
                 if (checkCollision(player1.getColliders(), fish1.getColliders()) == 1) {
                     player1.bounce();
                 }
                 if (checkCollision(player1.getColliders(), fish2.getColliders()) == 1 && ishard) {
                     player1.bounce();
                 }
+                if (checkCollision(player1.getColliders(), tmpfish.getColliders()) == 1) {
+                    player1.bounce();
+                }
+
+                if (checkCollision(player1.getColliders(), tmpgate.getColliders()) == 1) {
+                    player1.bounce();
+                }
+
+                if (checkState(player1, gate1) == 0){
+                    player1.bounce();
+                }
                 if (checkCollision(player1.getColliders(), gate1.getColliders()) == 1) {
                     player1.bounce();
                 }
-                if (checkState(player1, gate1) == 0) {
-                    player1.bounce();
-                }
                 if (player1.getPosX() - fish1.getPosX() > 60 + SCREEN_WIDTH / 4) {
+                    tmpfish.newPOS(fish1.getPosX(), fish1.getPosY());
+                    tmpfish.shiftColliders();
                     fish1.newPOS(player1.getPosX() + SCREEN_WIDTH, rand() % 240);
                     fish1.shiftColliders();
                 }
                 if (player1.getPosX() - fish2.getPosX() > 60 + SCREEN_WIDTH / 4 and ishard) {
+                    tmpfish.newPOS(fish2.getPosX(), fish2.getPosY());
+                    tmpfish.shiftColliders();
                     fish2.newPOS(player1.getPosX() + SCREEN_WIDTH, rand() % 240);
                     fish2.shiftColliders();
                 }
                 if (player1.getPosX() - gate1.getPosX() > 60 + SCREEN_WIDTH / 4) {
+                    tmpgate.assignGate(gate1.getState(), gate1.getNumber());
+                    tmpgate.newPOS(gate1.getPosX(),gate1.getPosY());
+                    tmpgate.shiftColliders();
                     gate1.newPOS(player1.getPosX() + SCREEN_WIDTH, 0);
-                    do {
-                        gate1.assignGate(rand() % 5, rand() % 2);
-                    } while ((gate1.getState() == 0 && gate1.getNumber() == 0) || (gate1.getState() == 4 && gate1.getNumber() == 1));
-                    std::cout << "state:" << gate1.getState() << " number:" << gate1.getNumber() << std::endl;
+                    do{
+                        gate1.assignGate(rand()%5, rand()%2);
+                    }while((gate1.getState() == 0 && gate1.getNumber() == 0) || (gate1.getState() == 4 && gate1.getNumber() == 1));
+//                    std::cout << "state:"  <<gate1.getState() << " number:" << gate1.getNumber() << std::endl;
                     gate1.shiftColliders();
                 }
 
@@ -432,14 +510,43 @@ int main(int argc, char* args[])
                 //                }
 
 
-                std::cout << fish1.getPosX() << std::endl;
+//                std::cout << fish1.getPosX() << std::endl;
                 //                std::cout << player1.getPosX() << std::endl;
 
 
                 //                fish1.render();
 
                                 //Update screen
-                SDL_RenderPresent(gRenderer);
+
+                //Set text to be rendered
+                timeText.str("");
+                timeText << "Seconds since start time " << (timer.getTicks() / 1000.f);
+
+                //Render text
+                if (!gTimeTextTexture.loadFromRenderedText(timeText.str().c_str(), textColor))
+                {
+                    printf("Unable to render time texture!\n");
+                }
+
+                //Clear screen
+                SDL_RenderClear(gRenderer);
+
+                //Render textures
+                                //Render background
+                gBGTexture.render(0, 0, &camera);
+
+                //Render player
+                player1.render(camera.x, camera.y, frame);
+                fish1.render(camera.x, camera.y);
+                if (ishard) {
+                    fish2.render(camera.x, camera.y);
+                }
+                gate1.render(camera.x, camera.y);
+                tmpfish.render(camera.x, camera.y);
+                tmpgate.render(camera.x, camera.y);
+                //gStartPromptTexture.render((SCREEN_WIDTH - gStartPromptTexture.getWidth()) / 2, 0);
+                //gPausePromptTexture.render((SCREEN_WIDTH - gPausePromptTexture.getWidth()) / 2, gStartPromptTexture.getHeight());
+                gTimeTextTexture.render((SCREEN_WIDTH - gStartPromptTexture.getWidth()) / 2, 0);
 
                 //Go to next frame
                 if (paddleNotEnd)
@@ -466,6 +573,8 @@ int main(int argc, char* args[])
                         paddleTimes += 1;
                     }
                 }
+
+                SDL_RenderPresent(gRenderer);
             }
         }
     }
@@ -475,4 +584,3 @@ int main(int argc, char* args[])
 
     return 0;
 }
-
