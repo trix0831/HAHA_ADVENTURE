@@ -31,7 +31,9 @@ int paddleTimes = 0;
 bool paddleNotEnd = true;
 
 //game mode
-bool ishard = false;
+bool isHard = false;
+
+LTimer timer;
 
 std::queue< std::vector<SDL_Rect> > Colliders;
 
@@ -43,6 +45,9 @@ bool loadMedia();
 
 //Frees media and shuts down SDL
 void close();
+
+bool gameEnded = false;
+bool gameStarted = false;
 
 //The window we'll be rendering to
 SDL_Window* gWindow = NULL;
@@ -136,7 +141,7 @@ bool init()
     else
     {
         //Set text color as black
-        SDL_Color textColor = { 0, 0, 0, 255 };
+        SDL_Color textColor = { 250, 240, 71, 0 };
 
         ////Load stop prompt texture
         //if (!gStartPromptTexture.loadFromRenderedText("Press S to Start or Stop the Timer", textColor))
@@ -196,6 +201,10 @@ void restart(Boat &player1, Fish &fish1, Fish &fish2, Gate &gate1, Gate &tmpgate
     tmpfish.newPOS(13000, 0);
     tmpfish.shiftColliders();
 
+    timer.stop();
+    gameEnded = false;
+    gameStarted = false;
+
 //    std::cout << "restart" << std::endl;
 }
 
@@ -245,6 +254,8 @@ int main(int argc, char* args[])
     //random seed
     time_t t;
     srand((unsigned)time(&t));
+
+    bool quit = false;
     //Start up SDL and create window
     if (!init())
     {
@@ -263,9 +274,14 @@ int main(int argc, char* args[])
             SDL_Event a;
             bool start = false;
 
-            while(!start){
+            while(!start && !quit){
                 while (SDL_PollEvent(&a) != 0)
                 {
+                    if (a.type == SDL_QUIT)
+                    {
+                        quit = true;
+                    }
+
                     if (a.type == SDL_KEYDOWN && a.key.repeat == 0 && a.key.keysym.sym == SDLK_s) {
                         start = true;
                     }
@@ -283,16 +299,21 @@ int main(int argc, char* args[])
             SDL_Event b;
             bool selected = false;
 
-            while (!selected) {
+            while (!selected && !quit) {
                 while (SDL_PollEvent(&b) != 0)
                 {
+                    if (b.type == SDL_QUIT)
+                    {
+                        quit = true;
+                    }
+
                     if (b.type == SDL_KEYDOWN && b.key.repeat == 0 && b.key.keysym.sym == SDLK_h) {
-                        ishard = true;
+                        isHard = true;
                         selected = true;
                     }
 
                     if (b.type == SDL_KEYDOWN && b.key.repeat == 0 && b.key.keysym.sym == SDLK_e) {
-                        ishard = false;
+                        isHard = false;
                         selected = true;
                     }
                 }
@@ -311,14 +332,11 @@ int main(int argc, char* args[])
         else
         {
             //Main loop flag
-            bool quit = false;
-
-            LTimer timer;
 
             std::stringstream timeText;
 
             //Set text color as black
-            SDL_Color textColor = { 0, 0, 0, 255 };
+            SDL_Color textColor = { 240, 250, 71, 255 };
 
             //Event handler
             SDL_Event e;
@@ -352,9 +370,14 @@ int main(int argc, char* args[])
                         //The camera area
             SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 
+
+
             //While application is running
+            Uint32 scoreTime = 1;
             while (!quit)
             {
+
+
                 //Handle events on queue
                 while (SDL_PollEvent(&e) != 0)
                 {
@@ -363,6 +386,12 @@ int main(int argc, char* args[])
                     {
                         quit = true;
                     }
+
+                    if (e.type == SDL_KEYDOWN && !gameStarted && (e.key.keysym.sym == SDLK_LEFT || e.key.keysym.sym == SDLK_RIGHT)) {
+                        timer.start();
+                        gameStarted = true;
+                    }
+
 
                     //Handle input for the dot
                     player1.handleEvent(e);
@@ -375,40 +404,26 @@ int main(int argc, char* args[])
                         restart(player1, fish1, fish2, gate1, tmpgate, tmpfish);
                     }
 
-                    if (player1.getPosX() > LEVEL_WIDTH - BOAT_WIDTH-10) {
-                        restart(player1, fish1, fish2, gate1, tmpgate, tmpfish);
+                    if (e.type == SDL_KEYDOWN && e.key.repeat == 0 && e.key.keysym.sym == SDLK_w) {
+                        player1.changePos(LEVEL_WIDTH - BOAT_WIDTH - 5, SCREEN_HEIGHT / 2 - BOAT_HEIGHT / 2);
                     }
-                    if (e.key.keysym.sym == SDLK_s)
-                    {
-                        timer.start();
-                        //if (timer.isStarted())
-                        //{
-                        //    timer.stop();
-                        //}
-                        //else
-                        //{
-                        //    timer.start();
-                        //}
-                    }
-                    //Pause/unpause
-                    else if (e.key.keysym.sym == SDLK_p)
-                    {
+
+                    if (player1.getPosX() > LEVEL_WIDTH - BOAT_WIDTH-10 && gameEnded == false) {
+                        //restart(player1, fish1, fish2, gate1, tmpgate, tmpfish);
+                        std::cout << "hi" << std::endl;
+                        scoreTime = timer.getTicks();
+                        std::cout << scoreTime << std::endl;
                         timer.stop();
-                        //if (timer.isPaused())
-                        //{
-                        //    timer.unpause();
-                        //}
-                        //else
-                        //{
-                        //    timer.pause();
-                        //}
+                        gameEnded = true;
                     }
+
 
                 }
 
 
 
                 //Move the dot
+                if(gameStarted)
                 player1.move();
 
                 //Center the camera over the dot
@@ -452,7 +467,7 @@ int main(int argc, char* args[])
                 if (checkCollision(player1.getColliders(), fish1.getColliders()) == 1) {
                     player1.bounce();
                 }
-                if (checkCollision(player1.getColliders(), fish2.getColliders()) == 1 && ishard) {
+                if (checkCollision(player1.getColliders(), fish2.getColliders()) == 1 && isHard) {
                     player1.bounce();
                 }
                 if (checkCollision(player1.getColliders(), tmpfish.getColliders()) == 1) {
@@ -475,7 +490,7 @@ int main(int argc, char* args[])
                     fish1.newPOS(player1.getPosX() + SCREEN_WIDTH, rand() % 240);
                     fish1.shiftColliders();
                 }
-                if (player1.getPosX() - fish2.getPosX() > 60 + SCREEN_WIDTH / 4 and ishard) {
+                if (player1.getPosX() - fish2.getPosX() > 60 + SCREEN_WIDTH / 4 and isHard) {
                     tmpfish.newPOS(fish2.getPosX(), fish2.getPosY());
                     tmpfish.shiftColliders();
                     fish2.newPOS(player1.getPosX() + SCREEN_WIDTH, rand() % 240);
@@ -493,43 +508,32 @@ int main(int argc, char* args[])
                     gate1.shiftColliders();
                 }
 
-                //                if (int(player1.getPosX())%2000 > 3000  && fish1.checkAppeared() == 0){
-                //                    fish1.newPOS(player1.getPosX()+SCREEN_WIDTH, rand()%SCREEN_HEIGHT);
-                //                    fish1.shiftColliders();
-                //                    fish1.switchAppeared();
-                //                }else if(int(player1.getPosX())%2000 > 30) {
-                //                    fish1.switchAppeared();
-                //                }
-                //
-                //                if (int(player1.getPosX())%2000 > 3000 && fish2.checkAppeared() == 0){
-                //                    fish2.newPOS(player1.getPosX()+SCREEN_WIDTH, rand()%LEVEL_HEIGHT);
-                //                    fish2.shiftColliders();
-                //                    fish2.switchAppeared();
-                //                }else if(int(player1.getPosX())%2000 > 1030) {
-                //                    fish2.switchAppeared();
-                //                }
 
-
-//                std::cout << fish1.getPosX() << std::endl;
-                //                std::cout << player1.getPosX() << std::endl;
-
-
-                //                fish1.render();
-
-                                //Update screen
-
-                //Set text to be rendered
-                timeText.str("");
-                timeText << "Seconds since start time " << (timer.getTicks() / 1000.f);
-
-                //Render text
-                if (!gTimeTextTexture.loadFromRenderedText(timeText.str().c_str(), textColor))
-                {
-                    printf("Unable to render time texture!\n");
-                }
+                
 
                 //Clear screen
                 SDL_RenderClear(gRenderer);
+                //Set text to be rendered
+                if (gameEnded == 0) {
+                    timeText.str("");
+                    timeText << "Seconds since start time " << (timer.getTicks() / 1000.f);
+                    //Render text
+                    if (!gTimeTextTexture.loadFromRenderedText(timeText.str().c_str(), textColor))
+                    {
+                        printf("Unable to render time texture!\n");
+                    }
+                }
+                else {
+                    timeText.str("");
+                    timeText << "final time:  " << (scoreTime / 1000.f);
+                    if (!gTimeTextTexture.loadFromRenderedText(timeText.str().c_str(), textColor))
+                    {
+                        printf("Unable to render time texture!\n");
+                    }
+                }
+
+
+
 
                 //Render textures
                                 //Render background
@@ -538,7 +542,7 @@ int main(int argc, char* args[])
                 //Render player
                 player1.render(camera.x, camera.y, frame);
                 fish1.render(camera.x, camera.y);
-                if (ishard) {
+                if (isHard) {
                     fish2.render(camera.x, camera.y);
                 }
                 gate1.render(camera.x, camera.y);
